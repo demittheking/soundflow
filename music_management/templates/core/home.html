@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1 style="margin-bottom: 2rem;">Добро пожаловать, {{ user.username }}</h1>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+    <!-- Левая колонка - проекты -->
+    <div>
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h2 style="margin: 0;">📁 Мои проекты</h2>
+                <a href="{% url 'project_create' %}" class="btn">Создать проект</a>
+            </div>
+
+            {% if projects %}
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    {% for project in projects %}
+                    <div class="project-card" onclick="window.location.href='{% url 'project_detail' project.pk %}'" style="cursor: pointer; padding: 1rem;">
+                        {% if project.cover %}
+                            <img src="{{ project.cover.url }}" alt="{{ project.title }}" style="width: 100%; height: 160px; object-fit: cover; border-radius: 12px; margin-bottom: 1rem;">
+                        {% else %}
+                            <div style="width: 100%; height: 160px; background: linear-gradient(135deg, #6c63ff, #4a42c4); border-radius: 12px; margin-bottom: 1rem; display: flex; align-items: center; justify-content: center;">
+                                <span style="font-size: 48px;">🎵</span>
+                            </div>
+                        {% endif %}
+                        <h3 style="margin-bottom: 0.5rem; color: #1a1a2e;">{{ project.title }}</h3>
+                        <p style="color: #718096; font-size: 14px; margin-bottom: 1rem;">{{ project.description|truncatechars:80|default:"Нет описания" }}</p>
+                        <div style="display: flex; gap: 1rem; font-size: 12px; color: #a0aec0;">
+                            <span>📊 {{ project.tracks.count }} треков</span>
+                            <span>✅ {{ project.tasks.all|length }} задач</span>
+                            <span>{{ project.members.count }} участников</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div style="text-align: center; padding: 3rem; background: #f8f9fa; border-radius: 16px;">
+                    <p style="color: #a0aec0; margin-bottom: 1rem;">✨ У вас пока нет проектов</p>
+                    <a href="{% url 'project_create' %}" class="btn">Создать первый проект</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Правая колонка - лента активности -->
+    <div>
+        <div class="card">
+            <h2 style="margin-bottom: 1.5rem;">Лента активности</h2>
+            <div style="max-height: 550px; overflow-y: auto;">
+                {% if activities %}
+                    {% for activity in activities %}
+                    <div style="padding: 12px 0; border-bottom: 1px solid #e2e8f0; transition: all 0.2s;">
+                        <div style="display: flex; align-items: start; gap: 12px;">
+                            <div style="width: 36px; height: 36px; flex-shrink: 0;">
+                                {% if activity.user.profile.avatar %}
+                                    <img src="{{ activity.user.profile.avatar.url }}" alt="{{ activity.user.username }}" style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover;">
+                                {% else %}
+                                    <div class="avatar" style="width: 36px; height: 36px; font-size: 14px; display: flex; align-items: center; justify-content: center;">
+                                        {{ activity.user.username|first|upper }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div style="flex: 1;">
+                                <div>
+                                    <strong style="color: #1a1a2e;">{{ activity.user.username }}</strong>
+                                    <span style="color: #4a5568;"> {{ activity.message }}</span>
+                                </div>
+                                <div style="font-size: 11px; color: #a0aec0; margin-top: 6px;">
+                                    {% if activity.project %}
+                                        📁 {{ activity.project.title }}
+                                    {% endif %}
+                                    • 🕐 {{ activity.created_at|date:"d.m.Y H:i" }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div style="text-align: center; padding: 3rem;">
+                        <div style="font-size: 48px; margin-bottom: 12px;">📭</div>
+                        <p style="color: #a0aec0;">Нет активностей</p>
+                        <p style="color: #cbd5e0; font-size: 12px; margin-top: 6px;">Начните работать над проектами!</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

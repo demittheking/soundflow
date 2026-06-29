@@ -1,0 +1,253 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <a href="{% url 'project_detail' project.pk %}" style="color: #6c63ff; text-decoration: none;">← Назад к проекту</a>
+    <h1>Задачи проекта: {{ project.title }}</h1>
+</div>
+
+<div style="margin-bottom: 1rem;">
+    <button id="createTaskBtn" class="btn">+ Создать задачу</button>
+</div>
+
+<div id="taskModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div style="background: white; padding: 2rem; border-radius: 10px; max-width: 500px; width: 90%;">
+        <h3>Создать задачу</h3>
+        <form method="post" action="{% url 'create_task' project.id %}">
+            {% csrf_token %}
+            <div style="margin-bottom: 1rem;">
+                <label>Название *</label>
+                <input type="text" name="title" required style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ddd; border-radius: 4px;">
+            </div>
+            <div style="margin-bottom: 1rem;">
+                <label>Описание</label>
+                <textarea name="description" rows="3" style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ddd; border-radius: 4px;"></textarea>
+            </div>
+            <div style="margin-bottom: 1rem;">
+                <label>Исполнитель</label>
+                <select name="assignee" style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ddd; border-radius: 4px;">
+                    <option value="">Не назначен</option>
+                    {% for member in project.members.all %}
+                    <option value="{{ member.user.id }}">{{ member.user.username }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div style="margin-bottom: 1rem;">
+                <label>Срок выполнения</label>
+                <input type="date" name="due_date" style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ddd; border-radius: 4px;">
+            </div>
+            <div style="margin-bottom: 1rem;">
+                <label>Приоритет</label>
+                <select name="priority" style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ddd; border-radius: 4px;">
+                    <option value="1">Низкий</option>
+                    <option value="2" selected>Средний</option>
+                    <option value="3">Высокий</option>
+                    <option value="4">Критический</option>
+                </select>
+            </div>
+            <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                <button type="button" onclick="closeModal()" style="padding: 8px 16px; background: #666; color: white; border: none; border-radius: 4px;">Отмена</button>
+                <button type="submit" class="btn">Создать</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem;">
+    <!-- TODO -->
+    <div class="card" style="background: #f8f9fa;">
+        <h3 style="text-align: center; padding-bottom: 0.5rem; border-bottom: 2px solid #6c63ff;">📋 К выполнению</h3>
+        <div id="todo-column" class="task-column" data-status="todo" style="min-height: 400px;">
+            {% for task in tasks %}
+                {% if task.status == 'todo' %}
+                    <div class="task-card" data-task-id="{{ task.id }}" style="background: white; padding: 0.75rem; margin-bottom: 0.5rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); cursor: move;">
+                        <div style="display: flex; justify-content: space-between; align-items: start;">
+                            <strong>{{ task.title }}</strong>
+                            <button onclick="deleteTask({{ task.id }})" style="background: none; border: none; color: red; cursor: pointer;">🗑️</button>
+                        </div>
+                        {% if task.description %}
+                            <p style="font-size: 12px; color: #666; margin-top: 0.25rem;">{{ task.description|truncatechars:60 }}</p>
+                        {% endif %}
+                        <div style="display: flex; justify-content: space-between; margin-top: 0.5rem; font-size: 11px;">
+                            <span style="color: {% if task.priority == 4 %}red{% elif task.priority == 3 %}orange{% else %}green{% endif %};">
+                                {% if task.priority == 1 %}🔵 Низкий{% elif task.priority == 2 %}🟢 Средний{% elif task.priority == 3 %}🟠 Высокий{% else %}🔴 Критический{% endif %}
+                            </span>
+                            {% if task.assignee %}
+                                <span>👤 {{ task.assignee.username }}</span>
+                            {% endif %}
+                        </div>
+                        {% if task.due_date %}
+                            <div style="font-size: 11px; margin-top: 0.25rem; color: {% if task.is_overdue %}red{% else %}#666{% endif %};">
+                                📅 {{ task.due_date }}
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- IN PROGRESS -->
+    <div class="card" style="background: #f8f9fa;">
+        <h3 style="text-align: center; padding-bottom: 0.5rem; border-bottom: 2px solid #ffc107;">⚙️ В работе</h3>
+        <div id="in_progress-column" class="task-column" data-status="in_progress" style="min-height: 400px;">
+            {% for task in tasks %}
+                {% if task.status == 'in_progress' %}
+                    <div class="task-card" data-task-id="{{ task.id }}" style="background: white; padding: 0.75rem; margin-bottom: 0.5rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); cursor: move;">
+                        <!-- такое же содержимое как выше -->
+                        <div style="display: flex; justify-content: space-between; align-items: start;">
+                            <strong>{{ task.title }}</strong>
+                            <button onclick="deleteTask({{ task.id }})" style="background: none; border: none; color: red; cursor: pointer;">🗑️</button>
+                        </div>
+                        {% if task.description %}
+                            <p style="font-size: 12px; color: #666; margin-top: 0.25rem;">{{ task.description|truncatechars:60 }}</p>
+                        {% endif %}
+                        <div style="display: flex; justify-content: space-between; margin-top: 0.5rem; font-size: 11px;">
+                            <span style="color: {% if task.priority == 4 %}red{% elif task.priority == 3 %}orange{% else %}green{% endif %};">
+                                {% if task.priority == 1 %}🔵 Низкий{% elif task.priority == 2 %}🟢 Средний{% elif task.priority == 3 %}🟠 Высокий{% else %}🔴 Критический{% endif %}
+                            </span>
+                            {% if task.assignee %}
+                                <span>👤 {{ task.assignee.username }}</span>
+                            {% endif %}
+                        </div>
+                        {% if task.due_date %}
+                            <div style="font-size: 11px; margin-top: 0.25rem; color: {% if task.is_overdue %}red{% else %}#666{% endif %};">
+                                📅 {{ task.due_date }}
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- REVIEW -->
+    <div class="card" style="background: #f8f9fa;">
+        <h3 style="text-align: center; padding-bottom: 0.5rem; border-bottom: 2px solid #17a2b8;">🔍 На проверке</h3>
+        <div id="review-column" class="task-column" data-status="review" style="min-height: 400px;">
+            {% for task in tasks %}
+                {% if task.status == 'review' %}
+                    <div class="task-card" data-task-id="{{ task.id }}" style="background: white; padding: 0.75rem; margin-bottom: 0.5rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); cursor: move;">
+                        <!-- такое же содержимое -->
+                        <div style="display: flex; justify-content: space-between; align-items: start;">
+                            <strong>{{ task.title }}</strong>
+                            <button onclick="deleteTask({{ task.id }})" style="background: none; border: none; color: red; cursor: pointer;">🗑️</button>
+                        </div>
+                        {% if task.description %}
+                            <p style="font-size: 12px; color: #666; margin-top: 0.25rem;">{{ task.description|truncatechars:60 }}</p>
+                        {% endif %}
+                        <div style="display: flex; justify-content: space-between; margin-top: 0.5rem; font-size: 11px;">
+                            <span style="color: {% if task.priority == 4 %}red{% elif task.priority == 3 %}orange{% else %}green{% endif %};">
+                                {% if task.priority == 1 %}🔵 Низкий{% elif task.priority == 2 %}🟢 Средний{% elif task.priority == 3 %}🟠 Высокий{% else %}🔴 Критический{% endif %}
+                            </span>
+                            {% if task.assignee %}
+                                <span>👤 {{ task.assignee.username }}</span>
+                            {% endif %}
+                        </div>
+                        {% if task.due_date %}
+                            <div style="font-size: 11px; margin-top: 0.25rem; color: {% if task.is_overdue %}red{% else %}#666{% endif %};">
+                                📅 {{ task.due_date }}
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- DONE -->
+    <div class="card" style="background: #f8f9fa;">
+        <h3 style="text-align: center; padding-bottom: 0.5rem; border-bottom: 2px solid #28a745;">✅ Выполнена</h3>
+        <div id="done-column" class="task-column" data-status="done" style="min-height: 400px;">
+            {% for task in tasks %}
+                {% if task.status == 'done' %}
+                    <div class="task-card" data-task-id="{{ task.id }}" style="background: white; padding: 0.75rem; margin-bottom: 0.5rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); opacity: 0.7;">
+                        <div style="display: flex; justify-content: space-between; align-items: start;">
+                            <strong><s>{{ task.title }}</s></strong>
+                            <button onclick="deleteTask({{ task.id }})" style="background: none; border: none; color: red; cursor: pointer;">🗑️</button>
+                        </div>
+                        {% if task.description %}
+                            <p style="font-size: 12px; color: #666; margin-top: 0.25rem;">{{ task.description|truncatechars:60 }}</p>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<script>
+    function openModal() {
+        document.getElementById('taskModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+        document.getElementById('taskModal').style.display = 'none';
+    }
+
+    function deleteTask(taskId) {
+        if (confirm('Удалить задачу?')) {
+            window.location.href = `/tasks_app/delete/${taskId}/`;
+        }
+    }
+
+    document.getElementById('createTaskBtn').addEventListener('click', openModal);
+
+    // Drag and Drop функциональность
+    const cards = document.querySelectorAll('.task-card');
+    const columns = document.querySelectorAll('.task-column');
+
+    cards.forEach(card => {
+        card.addEventListener('dragstart', handleDragStart);
+        card.setAttribute('draggable', 'true');
+    });
+
+    columns.forEach(column => {
+        column.addEventListener('dragover', handleDragOver);
+        column.addEventListener('drop', handleDrop);
+    });
+
+    let draggedItem = null;
+
+    function handleDragStart(e) {
+        draggedItem = this;
+        e.dataTransfer.setData('text/plain', this.dataset.taskId);
+    }
+
+    function handleDragOver(e) {
+        e.preventDefault();
+    }
+
+    function handleDrop(e) {
+        e.preventDefault();
+        const taskId = e.dataTransfer.getData('text/plain');
+        const newStatus = this.dataset.status;
+
+        fetch(`/tasks_app/update/${taskId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ status: newStatus })
+        }).then(() => {
+            location.reload();
+        });
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+</script>
+{% endblock %}

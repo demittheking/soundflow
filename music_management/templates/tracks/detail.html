@@ -1,0 +1,477 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 2rem;">
+    <div>
+        <a href="{% url 'track_list' track.project.pk %}" style="color: #6c63ff; text-decoration: none;">← Назад к трекам</a>
+        <h1>{{ track.title }}</h1>
+        <div style="display: flex; gap: 1rem; margin-top: 0.5rem;">
+            <span>Статус: {{ track.get_status_display }}</span>
+            {% if track.bpm %}<span>BPM: {{ track.bpm }}</span>{% endif %}
+            {% if track.key %}<span>Тональность: {{ track.key }}</span>{% endif %}
+        </div>
+    </div>
+    <a href="{% url 'track_edit' track.pk %}" class="btn">Редактировать</a>
+</div>
+
+<!-- Аудиоплеер с волновой формой -->
+<div class="card">
+    <h3>Аудиоплеер</h3>
+    <div id="waveform" style="margin: 1rem 0;"></div>
+
+    {% if audio_files %}
+        <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+            <button id="playPauseBtn" class="btn" style="background: #6c63ff;">▶ Воспроизвести</button>
+            <select id="versionSelect" style="padding: 8px; border-radius: 4px; border: 1px solid #ddd;">
+                {% for audio in audio_files %}
+                <option value="{{ audio.file.url }}" data-audio-id="{{ audio.id }}">
+                    Версия {{ audio.version }} - {{ audio.uploaded_at|date:"d.m.Y" }}
+                </option>
+                {% endfor %}
+            </select>
+            <button id="addCommentBtn" class="btn" style="background: #28a745;">💬 Добавить комментарий на текущем времени</button>
+        </div>
+    {% else %}
+        <div style="background: #f0f0f0; height: 150px; display: flex; align-items: center; justify-content: center; border-radius: 8px; margin-top: 1rem;">
+            🎵 Загрузите аудиофайл, чтобы появился плеер
+        </div>
+    {% endif %}
+</div>
+
+<!-- Форма добавления комментария (модальное окно) -->
+<div id="commentModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div style="background: white; padding: 2rem; border-radius: 10px; max-width: 500px; width: 90%;">
+        <h3>Добавить комментарий</h3>
+        <p>Время: <strong id="commentTime">0:00</strong></p>
+        <textarea id="commentText" rows="4" style="width: 100%; padding: 8px; margin: 1rem 0; border: 1px solid #ddd; border-radius: 4px;" placeholder="Введите комментарий..."></textarea>
+        <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+            <button onclick="closeModal()" style="padding: 8px 16px; background: #666; color: white; border: none; border-radius: 4px; cursor: pointer;">Отмена</button>
+            <button id="saveCommentBtn" class="btn">Сохранить</button>
+        </div>
+    </div>
+</div>
+
+<!-- Список комментариев -->
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h3>Комментарии</h3>
+        <div>
+            <label>
+                <input type="checkbox" id="showResolvedCheckbox"> Показывать решенные
+            </label>
+        </div>
+    </div>
+    <div id="commentsList" style="margin-top: 1rem; max-height: 400px; overflow-y: auto;">
+        <p>Загрузка комментариев...</p>
+    </div>
+</div>
+
+<!-- Форма загрузки аудио -->
+<div class="card">
+    <h3>Загрузить новую версию</h3>
+    <form method="post" enctype="multipart/form-data" action="{% url 'audio_upload' track.id %}">
+        {% csrf_token %}
+        <div style="margin-bottom: 1rem;">
+            <label style="display: block; margin-bottom: 0.5rem;">Аудиофайл (MP3, WAV, OGG)</label>
+            <input type="file" name="audio_file" accept="audio/*" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+        </div>
+        <div style="margin-bottom: 1rem;">
+            <label style="display: block; margin-bottom: 0.5rem;">Комментарий к версии</label>
+            <textarea name="version_comment" rows="3" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" placeholder="Что изменилось в этой версии?"></textarea>
+        </div>
+        <button type="submit" class="btn">Загрузить</button>
+    </form>
+</div>
+
+<!-- История версий -->
+<div class="card">
+    <h3>История версий</h3>
+    {% if audio_files %}
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr>
+                    <th style="text-align: left; padding: 8px; border-bottom: 2px solid #eee;">Версия</th>
+                    <th style="text-align: left; padding: 8px; border-bottom: 2px solid #eee;">Файл</th>
+                    <th style="text-align: left; padding: 8px; border-bottom: 2px solid #eee;">Загрузил</th>
+                    <th style="text-align: left; padding: 8px; border-bottom: 2px solid #eee;">Дата</th>
+                    <th style="text-align: left; padding: 8px; border-bottom: 2px solid #eee;">Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for audio in audio_files %}
+                <tr>
+                    <td style="padding: 8px; border-bottom: 1px solid #eee;">v{{ audio.version }}</td>
+                    <td style="padding: 8px; border-bottom: 1px solid #eee;">{{ audio.original_filename }}</td>
+                    <td style="padding: 8px; border-bottom: 1px solid #eee;">{{ audio.uploaded_by.username }}</td>
+                    <td style="padding: 8px; border-bottom: 1px solid #eee;">{{ audio.uploaded_at|date:"d.m.Y H:i" }}</td>
+                    <td style="padding: 8px; border-bottom: 1px solid #eee;">
+                        <a href="{{ audio.file.url }}" download style="color: #6c63ff;">⬇️</a>
+                        {% if user == track.project.owner or user == audio.uploaded_by %}
+                        <a href="{% url 'audio_delete' audio.id %}" style="margin-left: 10px; color: red;" onclick="return confirm('Удалить этот файл?')">❎</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% if audio.version_comment %}
+                <tr>
+                    <td colspan="5" style="padding: 0 8px 8px 8px; color: #666; font-size: 14px;">
+                        💬 {{ audio.version_comment }}
+                    </td>
+                </tr>
+                {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>Нет загруженных аудиофайлов.</p>
+    {% endif %}
+</div>
+
+<script src="https://unpkg.com/wavesurfer.js@7.4.0/dist/wavesurfer.min.js"></script>
+<script>
+    let wavesurfer = null;
+    let currentAudioFileId = null;
+    let comments = [];
+    let svgOverlay = null;
+    let isWaveSurferReady = false;
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    function createSVGOverlay() {
+        const waveformContainer = document.getElementById('waveform');
+        if (!waveformContainer) return null;
+
+        // Удаляем старый SVG если есть
+        const oldSvg = waveformContainer.querySelector('.waveform-markers-svg');
+        if (oldSvg) oldSvg.remove();
+
+        // Создаем новый SVG
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('class', 'waveform-markers-svg');
+        svg.style.position = 'absolute';
+        svg.style.top = '0';
+        svg.style.left = '0';
+        svg.style.width = '100%';
+        svg.style.height = '100%';
+        svg.style.pointerEvents = 'none';
+        svg.style.zIndex = '50';
+
+        waveformContainer.style.position = 'relative';
+        waveformContainer.appendChild(svg);
+
+        return svg;
+    }
+
+    function initWaveSurfer(url, audioId) {
+        if (wavesurfer) {
+            wavesurfer.destroy();
+        }
+
+        isWaveSurferReady = false;
+        currentAudioFileId = audioId;
+
+        // Создаем контейнер с оберткой для canvas и SVG
+        const waveformContainer = document.getElementById('waveform');
+        waveformContainer.innerHTML = ''; // Очищаем
+        waveformContainer.style.position = 'relative';
+
+        wavesurfer = WaveSurfer.create({
+            container: '#waveform',
+            waveColor: '#6c63ff',
+            progressColor: '#4a42c4',
+            cursorColor: '#333',
+            barWidth: 2,
+            barRadius: 3,
+            cursorWidth: 1,
+            height: 150,
+            normalize: true
+        });
+
+        wavesurfer.load(url);
+
+        wavesurfer.on('ready', function() {
+            console.log('Аудио загружено, длительность:', wavesurfer.getDuration());
+            isWaveSurferReady = true;
+
+            // Создаем SVG поверх canvas
+            svgOverlay = createSVGOverlay();
+
+            // Загружаем комментарии
+            loadComments(currentAudioFileId);
+        });
+
+        wavesurfer.on('redraw', function() {
+            console.log('Redraw event');
+            if (isWaveSurferReady && svgOverlay) {
+                drawMarkersSVG();
+            }
+        });
+    }
+
+    function drawMarkersSVG() {
+        if (!svgOverlay || !wavesurfer || !isWaveSurferReady) {
+            console.log('Не готово для рисования маркеров');
+            return;
+        }
+
+        if (!comments || comments.length === 0) {
+            console.log('Нет комментариев');
+            return;
+        }
+
+        const duration = wavesurfer.getDuration();
+        if (!duration || duration === 0) return;
+
+        // Очищаем SVG
+        while (svgOverlay.firstChild) {
+            svgOverlay.removeChild(svgOverlay.firstChild);
+        }
+
+        const unresolvedComments = comments.filter(c => !c.is_resolved);
+        console.log(`Рисуем ${unresolvedComments.length} маркеров из ${comments.length} комментариев`);
+
+        unresolvedComments.forEach(comment => {
+            const timeInSeconds = comment.timestamp_seconds;
+            if (timeInSeconds > duration) return;
+
+            const percent = (timeInSeconds / duration) * 100;
+
+            // Создаем линию
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line.setAttribute('x1', `${percent}%`);
+            line.setAttribute('y1', '0');
+            line.setAttribute('x2', `${percent}%`);
+            line.setAttribute('y2', '100%');
+            line.setAttribute('stroke', '#ff4444');
+            line.setAttribute('stroke-width', '3');
+            line.setAttribute('stroke-dasharray', '0');
+            line.setAttribute('style', 'cursor: pointer; pointer-events: visible;');
+            line.setAttribute('data-time', timeInSeconds);
+            line.setAttribute('data-comment', comment.text);
+
+            // Добавляем обработчик клика
+            line.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (wavesurfer) {
+                    wavesurfer.seekTo(timeInSeconds / duration);
+                    highlightComment(comment.timestamp_seconds);
+                }
+            });
+
+            // Добавляем title для всплывающей подсказки
+            const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+            title.textContent = `${comment.author_username} (${formatTime(timeInSeconds)}): ${comment.text}`;
+            line.appendChild(title);
+
+            svgOverlay.appendChild(line);
+        });
+
+        console.log(`Нарисовано ${unresolvedComments.length} маркеров`);
+    }
+
+    function loadComments(audioId) {
+        fetch(`/tracks/api/comments/?audio_file_id=${audioId}`)
+            .then(response => response.json())
+            .then(data => {
+                console.log('Загружено комментариев:', data.length);
+                comments = data;
+                if (isWaveSurferReady && svgOverlay) {
+                    drawMarkersSVG();
+                }
+                renderCommentsList(data);
+            })
+            .catch(error => console.error('Error loading comments:', error));
+    }
+
+    function renderCommentsList(commentsData) {
+        const showResolved = document.getElementById('showResolvedCheckbox')?.checked || false;
+        const filtered = showResolved ? commentsData : commentsData.filter(c => !c.is_resolved);
+
+        const container = document.getElementById('commentsList');
+        if (!container) return;
+
+        if (filtered.length === 0) {
+            container.innerHTML = '<p style="color: #999;">Нет комментариев. Добавьте первый комментарий!</p>';
+            return;
+        }
+
+        container.innerHTML = filtered.map(comment => {
+            const isResolved = comment.is_resolved;
+            return `
+                <div class="comment-item" data-timestamp="${comment.timestamp_seconds}" style="padding: 1rem; border-bottom: 1px solid #eee; ${isResolved ? 'opacity: 0.7;' : ''}">
+                    <div style="display: flex; justify-content: space-between; align-items: start;">
+                        <div>
+                            <strong>${escapeHtml(comment.author_username)}</strong>
+                            <span style="color: #6c63ff; cursor: pointer; margin-left: 0.5rem;" onclick="seekToTime(${comment.timestamp_seconds})">
+                                📍 ${formatTime(comment.timestamp_seconds)}
+                            </span>
+                        </div>
+                        <div>
+                            <small style="color: #999;">${new Date(comment.created_at).toLocaleString()}</small>
+                            ${!isResolved ? `
+                                <button onclick="resolveComment(${comment.id})" style="margin-left: 0.5rem; padding: 4px 8px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                                    ✓ Решено
+                                </button>
+                            ` : '<span style="color: #28a745;">✓ Решен</span>'}
+                        </div>
+                    </div>
+                    <p style="margin-top: 0.5rem;">${escapeHtml(comment.text)}</p>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function formatTime(seconds) {
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    function seekToTime(seconds) {
+        if (wavesurfer && isWaveSurferReady) {
+            const duration = wavesurfer.getDuration();
+            wavesurfer.seekTo(seconds / duration);
+            highlightComment(seconds);
+        }
+    }
+
+    function highlightComment(timestamp) {
+        const commentItem = document.querySelector(`.comment-item[data-timestamp="${timestamp}"]`);
+        if (commentItem) {
+            commentItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            commentItem.style.backgroundColor = '#fff3cd';
+            setTimeout(() => {
+                commentItem.style.backgroundColor = '';
+            }, 2000);
+        }
+    }
+
+    function resolveComment(commentId) {
+        fetch(`/tracks/api/comments/${commentId}/resolve/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json'
+            }
+        }).then(() => {
+            loadComments(currentAudioFileId);
+        });
+    }
+
+    let pendingTimestamp = 0;
+
+    document.getElementById('addCommentBtn')?.addEventListener('click', () => {
+        if (!wavesurfer || !isWaveSurferReady) {
+            alert('Сначала загрузите аудиофайл');
+            return;
+        }
+        pendingTimestamp = Math.floor(wavesurfer.getCurrentTime());
+        document.getElementById('commentTime').innerText = formatTime(pendingTimestamp);
+        document.getElementById('commentModal').style.display = 'flex';
+    });
+
+    document.getElementById('saveCommentBtn')?.addEventListener('click', () => {
+        const text = document.getElementById('commentText').value.trim();
+        if (!text) {
+            alert('Введите текст комментария');
+            return;
+        }
+
+        fetch('/tracks/api/comments/add/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                audio_file_id: currentAudioFileId,
+                text: text,
+                timestamp_seconds: pendingTimestamp
+            })
+        }).then(response => response.json())
+          .then(data => {
+              if (data.success) {
+                  closeModal();
+                  document.getElementById('commentText').value = '';
+                  loadComments(currentAudioFileId);
+              } else {
+                  alert('Ошибка: ' + JSON.stringify(data));
+              }
+          });
+    });
+
+    function closeModal() {
+        document.getElementById('commentModal').style.display = 'none';
+    }
+
+    document.getElementById('versionSelect')?.addEventListener('change', (e) => {
+        const url = e.target.value;
+        const audioId = e.target.options[e.target.selectedIndex].getAttribute('data-audio-id');
+        if (url && audioId) {
+            initWaveSurfer(url, parseInt(audioId));
+        }
+    });
+
+    document.getElementById('playPauseBtn')?.addEventListener('click', () => {
+        if (wavesurfer && isWaveSurferReady) {
+            wavesurfer.playPause();
+            const btn = document.getElementById('playPauseBtn');
+            btn.textContent = wavesurfer.isPlaying() ? ' Пауза ' : '▶ Воспроизвести';
+        }
+    });
+
+    document.getElementById('showResolvedCheckbox')?.addEventListener('change', () => {
+        if (currentAudioFileId) {
+            renderCommentsList(comments);
+            if (isWaveSurferReady && svgOverlay) {
+                drawMarkersSVG();
+            }
+        }
+    });
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+            if (isWaveSurferReady && svgOverlay) {
+                drawMarkersSVG();
+            }
+        }, 200);
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM загружен');
+        {% if audio_files %}
+            const versionSelect = document.getElementById('versionSelect');
+            if (versionSelect && versionSelect.options.length > 0) {
+                const firstOption = versionSelect.options[0];
+                const url = firstOption.value;
+                const audioId = firstOption.getAttribute('data-audio-id');
+                if (url && audioId) {
+                    console.log('Инициализация с audioId:', audioId);
+                    initWaveSurfer(url, parseInt(audioId));
+                }
+            }
+        {% endif %}
+    });
+</script>
+{% endblock %}

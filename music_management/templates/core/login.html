@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="min-height: calc(100vh - 200px); display: flex; align-items: center; justify-content: center; padding: 2rem;">
+    <div class="card" style="max-width: 440px; width: 100%; margin: 0 auto; padding: 2rem;">
+        <div style="text-align: center; margin-bottom: 2rem;">
+            <div style="background: linear-gradient(135deg, #6c63ff, #4a42c4); width: 60px; height: 60px; border-radius: 20px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
+                <span style="font-size: 30px;">🎧</span>
+            </div>
+            <h2 style="color: #1a1a2e; margin-bottom: 0.5rem;">SOUND FLOW</h2>
+            <p style="color: #718096; font-size: 14px;">Войдите в свой аккаунт</p>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+
+            <div style="margin-bottom: 1.25rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #4a5568;">
+                    Имя пользователя или Email
+                </label>
+                <input type="text" name="username" required autofocus
+                       style="width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 14px; transition: all 0.2s;"
+                       placeholder="Введите имя пользователя"
+                       onfocus="this.style.borderColor='#6c63ff'; this.style.boxShadow='0 0 0 3px rgba(108,99,255,0.1)';"
+                       onblur="this.style.borderColor='#e2e8f0'; this.style.boxShadow='none';">
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #4a5568;">
+                    Пароль
+                </label>
+                <input type="password" name="password" required
+                       style="width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 14px; transition: all 0.2s;"
+                       placeholder="Введите пароль"
+                       onfocus="this.style.borderColor='#6c63ff'; this.style.boxShadow='0 0 0 3px rgba(108,99,255,0.1)';"
+                       onblur="this.style.borderColor='#e2e8f0'; this.style.boxShadow='none';">
+            </div>
+
+            <button type="submit" class="btn" style="width: 100%; padding: 12px; font-size: 16px; font-weight: 600;">
+                Войти
+            </button>
+        </form>
+
+        <div style="margin-top: 1.5rem; text-align: center; padding-top: 1rem; border-top: 1px solid #e2e8f0;">
+            <p style="color: #718096; font-size: 14px;">
+                Нет аккаунта?
+                <a href="{% url 'register' %}" style="color: #6c63ff; text-decoration: none; font-weight: 500;">Зарегистрироваться</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="card" style="max-width: 600px; margin: 0 auto;">
+    <h2>Редактировать задачу</h2>
+    <form method="post">
+        {% csrf_token %}
+        <div style="margin-bottom: 1rem;">
+            <label>Название</label>
+            <input type="text" name="title" value="{{ task.title }}" required style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ddd; border-radius: 4px;">
+        </div>
+        <div style="margin-bottom: 1rem;">
+            <label>Описание</label>
+            <textarea name="description" rows="4" style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ddd; border-radius: 4px;">{{ task.description }}</textarea>
+        </div>
+        <div style="margin-bottom: 1rem;">
+            <label>Исполнитель</label>
+            <select name="assignee" style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ddd; border-radius: 4px;">
+                <option value="">Не назначен</option>
+                {% for member in members %}
+                <option value="{{ member.user.id }}" {% if task.assignee.id == member.user.id %}selected{% endif %}>
+                    {{ member.user.username }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div style="margin-bottom: 1rem;">
+            <label>Срок</label>
+            <input type="date" name="due_date" value="{{ task.due_date|date:'Y-m-d' }}" style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ddd; border-radius: 4px;">
+        </div>
+        <div style="margin-bottom: 1rem;">
+            <label>Приоритет</label>
+            <select name="priority" style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ddd; border-radius: 4px;">
+                <option value="1" {% if task.priority == 1 %}selected{% endif %}>Низкий</option>
+                <option value="2" {% if task.priority == 2 %}selected{% endif %}>Средний</option>
+                <option value="3" {% if task.priority == 3 %}selected{% endif %}>Высокий</option>
+            </select>
+        </div>
+        <div style="display: flex; gap: 1rem;">
+            <button type="submit" class="btn">Сохранить</button>
+            <a href="{% url 'task_list' task.project.id %}" style="padding: 10px 20px; background: #666; color: white; text-decoration: none; border-radius: 5px;">Отмена</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

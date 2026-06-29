@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="card" style="max-width: 600px; margin: 0 auto;">
+    <h2>Создать трек в проекте "{{ project.title }}"</h2>
+    <form method="post">
+        {% csrf_token %}
+        <div style="margin-bottom: 1rem;">
+            <label style="display: block; margin-bottom: 0.5rem;">Название трека *</label>
+            <input type="text" name="title" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+        </div>
+        <div style="margin-bottom: 1rem;">
+            <label style="display: block; margin-bottom: 0.5rem;">BPM (темп)</label>
+            <input type="number" name="bpm" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+        </div>
+        <div style="margin-bottom: 1rem;">
+            <label style="display: block; margin-bottom: 0.5rem;">Тональность</label>
+            <input type="text" name="key" placeholder="Например: C, Dm, Em" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+        </div>
+        <div style="margin-bottom: 1rem;">
+            <label style="display: block; margin-bottom: 0.5rem;">Статус</label>
+            <select name="status" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                <option value="demo">Демо</option>
+                <option value="recording">В записи</option>
+                <option value="mixing">На сведении</option>
+                <option value="mastering">На мастеринге</option>
+                <option value="done">Готов</option>
+            </select>
+        </div>
+        <div style="display: flex; gap: 1rem;">
+            <button type="submit" class="btn">Создать</button>
+            <a href="{% url 'track_list' project.pk %}" style="padding: 10px 20px; background: #666; color: white; text-decoration: none; border-radius: 5px;">Отмена</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

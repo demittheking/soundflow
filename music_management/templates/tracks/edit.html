@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="card" style="max-width: 600px; margin: 0 auto;">
+    <h2>Редактировать трек</h2>
+    <form method="post">
+        {% csrf_token %}
+        <div style="margin-bottom: 1rem;">
+            <label style="display: block; margin-bottom: 0.5rem;">Название</label>
+            <input type="text" name="title" value="{{ track.title }}" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+        </div>
+        <div style="margin-bottom: 1rem;">
+            <label style="display: block; margin-bottom: 0.5rem;">BPM</label>
+            <input type="number" name="bpm" value="{{ track.bpm }}" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+        </div>
+        <div style="margin-bottom: 1rem;">
+            <label style="display: block; margin-bottom: 0.5rem;">Тональность</label>
+            <input type="text" name="key" value="{{ track.key }}" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+        </div>
+        <div style="margin-bottom: 1rem;">
+            <label style="display: block; margin-bottom: 0.5rem;">Статус</label>
+            <select name="status" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                <option value="demo" {% if track.status == 'demo' %}selected{% endif %}>Демо</option>
+                <option value="recording" {% if track.status == 'recording' %}selected{% endif %}>В записи</option>
+                <option value="mixing" {% if track.status == 'mixing' %}selected{% endif %}>На сведении</option>
+                <option value="mastering" {% if track.status == 'mastering' %}selected{% endif %}>На мастеринге</option>
+                <option value="done" {% if track.status == 'done' %}selected{% endif %}>Готов</option>
+            </select>
+        </div>
+        <div style="display: flex; gap: 1rem;">
+            <button type="submit" class="btn">Сохранить</button>
+            <a href="{% url 'track_detail' track.pk %}" style="padding: 10px 20px; background: #666; color: white; text-decoration: none; border-radius: 5px;">Отмена</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

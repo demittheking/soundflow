@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <h1>Мои проекты</h1>
+    <a href="{% url 'project_create' %}" class="btn">+ Новый проект</a>
+</div>
+
+{% if projects %}
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem;">
+        {% for project in projects %}
+        <div class="project-card" onclick="window.location.href='{% url 'project_detail' project.pk %}'">
+            {% if project.cover %}
+                <img src="{{ project.cover.url }}" alt="{{ project.title }}" style="width: 100%; height: 160px; object-fit: cover; border-radius: 12px; margin-bottom: 1rem;">
+            {% else %}
+                <div style="width: 100%; height: 160px; background: linear-gradient(135deg, #6c63ff, #4a42c4); border-radius: 12px; margin-bottom: 1rem; display: flex; align-items: center; justify-content: center;">
+                    <span style="font-size: 48px;">🎵</span>
+                </div>
+            {% endif %}
+            <h3 style="margin-bottom: 0.5rem;">{{ project.title }}</h3>
+            <p style="color: #666; font-size: 14px;">{{ project.description|truncatechars:80 }}</p>
+            <p style="color: #999; font-size: 12px; margin-top: 1rem;">
+                Статус: {{ project.get_status_display }} | Обновлен: {{ project.updated_at|date:"d.m.Y" }}
+            </p>
+        </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="card" style="text-align: center;">
+        <p>У вас пока нет проектов.</p>
+        <a href="{% url 'project_create' %}" class="btn">Создать первый проект</a>
+    </div>
+{% endif %}
+{% endblock %}

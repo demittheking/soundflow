@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOUND FLOW - Управление музыкальными проектами</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
+            min-height: 100vh;
+            color: #1a1a2e;
+        }
+
+        /* Шапка */
+        .header {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid rgba(108, 99, 255, 0.1);
+        }
+
+        .logo {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .logo h1 {
+            background: linear-gradient(135deg, #6c63ff 0%, #4a42c4 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            font-size: 28px;
+            letter-spacing: -0.5px;
+        }
+
+        .logo p {
+            font-size: 11px;
+            color: #6c63ff;
+            margin-top: -4px;
+            letter-spacing: 0.5px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #4a5568;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-links a:hover {
+            color: #6c63ff;
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: #6c63ff;
+            transition: width 0.3s ease;
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .notification-icon {
+            position: relative;
+            cursor: pointer;
+            font-size: 22px;
+            transition: transform 0.2s;
+        }
+
+        .notification-icon:hover {
+            transform: scale(1.1);
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: linear-gradient(135deg, #ff4757, #ff6b81);
+            color: white;
+            border-radius: 50%;
+            padding: 2px 6px;
+            font-size: 10px;
+            font-weight: bold;
+            min-width: 18px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #6c63ff, #4a42c4);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 2px 8px rgba(108, 99, 255, 0.3);
+        }
+
+        .avatar:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(108, 99, 255, 0.4);
+        }
+
+        /* Контейнер */
+        .container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        /* Карточки */
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Кнопки */
+        .btn {
+            background: linear-gradient(135deg, #6c63ff, #4a42c4);
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            box-shadow: 0 2px 4px rgba(108, 99, 255, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(108, 99, 255, 0.4);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid #6c63ff;
+            color: #6c63ff;
+            box-shadow: none;
+        }
+
+        .btn-outline:hover {
+            background: #6c63ff;
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ff4757, #c0392b);
+            box-shadow: 0 2px 4px rgba(255, 71, 87, 0.3);
+        }
+
+        /* Формы */
+        input, textarea, select {
+            background: #f8f9fa;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #6c63ff;
+            box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.1);
+            background: white;
+        }
+
+        label {
+            font-weight: 500;
+            color: #4a5568;
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        /* Таблицы */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            text-align: left;
+            padding: 12px;
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        /* Адаптивность */
+        @media (max-width: 768px) {
+            .header {
+                padding: 1rem;
+            }
+
+            .nav-links {
+                gap: 1rem;
+            }
+
+            .container {
+                padding: 0 1rem;
+                margin: 1rem auto;
+            }
+
+            .card {
+                padding: 1rem;
+            }
+
+            .btn {
+                padding: 8px 16px;
+                font-size: 12px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            h2 {
+                font-size: 20px;
+            }
+        }
+
+        /* Анимации */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card, .project-card {
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        /* Проекты в сетке */
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .project-card {
+            background: white;
+            border-radius: 16px;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(108, 99, 255, 0.1);
+        }
+
+        .project-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+            border-color: #6c63ff;
+        }
+
+        /* Задачи */
+        .task-item {
+            transition: all 0.2s ease;
+        }
+
+        .task-item:hover {
+            background: #f8f9fa;
+            transform: translateX(4px);
+        }
+
+        /* Комментарии */
+        .comment-item {
+            transition: all 0.2s ease;
+        }
+
+        .comment-item:hover {
+            background: #f8f9fa;
+        }
+
+        /* Скроллбар */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #6c63ff;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #4a42c4;
+        }
+        /* Логотип как ссылка */
+        .logo {
+            transition: transform 0.2s ease;
+        }
+
+        a:hover .logo {
+            transform: scale(1.02);
+        }
+
+        .logo h1, .logo p {
+            transition: all 0.2s ease;
+        }
+
+        a:hover .logo h1 {
+            background: linear-gradient(135deg, #4a42c4, #6c63ff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        /* Анимация для карточек задач */
+        .task-item {
+            transition: all 0.2s ease;
+        }
+
+        .task-item:hover {
+            transform: translateX(4px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <a href="{% url 'home' %}" style="text-decoration: none;">
+            <div class="logo">
+                <h1>SOUND FLOW</h1>
+                <p>Управление музыкальными проектами</p>
+            </div>
+        </a>
+
+        {% if user.is_authenticated %}
+        <div class="nav-links">
+            <a href="{% url 'home' %}">🏠 Главная</a>
+            <a href="{% url 'project_list' %}">📁 Проекты</a>
+            <a href="{% url 'my_tasks' %}">✅ Мои задачи</a>
+            <div class="user-menu">
+                <div class="notification-icon" id="notificationBell">
+                    🔔
+                    <span id="notificationBadge" class="notification-badge" style="display: none;">0</span>
+                </div>
+                <div class="avatar" id="avatarBtn" style="cursor: pointer;">
+                    {% if user.profile.avatar %}
+                        <img src="{{ user.profile.avatar.url }}" alt="Avatar" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
+                    {% else %}
+                        {{ user.first_name|first|default:user.username|first|upper }}{{ user.last_name|first|upper }}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </header>
+
+    <!-- Выпадающее меню уведомлений -->
+    <!-- Выпадающее меню уведомлений -->
+    <div id="notificationDropdown" style="display: none; position: fixed; top: 70px; right: 20px; width: 380px; background: white; border-radius: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.15); z-index: 1000; max-height: 500px; overflow-y: auto; border: 1px solid rgba(108, 99, 255, 0.1);">
+        <div style="padding: 18px 20px; border-bottom: 1px solid #e2e8f0; font-weight: 600; display: flex; justify-content: space-between; align-items: center; background: linear-gradient(135deg, #fff, #f8f9fa); position: sticky; top: 0; border-radius: 16px 16px 0 0;">
+            <span style="font-size: 16px;">Уведомления</span>
+            <button id="markAllReadBtn" style="background: linear-gradient(135deg, #6c63ff, #4a42c4); color: white; border: none; padding: 6px 14px; border-radius: 20px; cursor: pointer; font-size: 11px; font-weight: 500; transition: all 0.2s;">
+                Отметить все
+            </button>
+        </div>
+        <div id="notificationsList" style="background: white;">
+            <div style="padding: 40px 20px; text-align: center; color: #a0aec0; font-size: 14px;">
+                ⏳ Загрузка уведомлений...
+            </div>
+        </div>
+    </div>
+
+    <div id="profileDropdown" style="display: none; position: fixed; top: 70px; right: 20px; width: 280px; background: white; border-radius: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.15); z-index: 1000; border: 1px solid rgba(108, 99, 255, 0.1); overflow: hidden;">
+        <div style="padding: 20px; background: linear-gradient(135deg, #6c63ff, #4a42c4); text-align: center;">
+            <div class="avatar" style="width: 60px; height: 60px; margin: 0 auto 10px; font-size: 24px; border: 3px solid white;">
+                {% if user.profile.avatar %}
+                    <img src="{{ user.profile.avatar.url }}" alt="Avatar" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover;">
+                {% else %}
+                    {{ user.first_name|first|default:user.username|first|upper }}{{ user.last_name|first|upper }}
+                {% endif %}
+            </div>
+            <div style="color: white; font-weight: 600; font-size: 16px;">{{ user.username }}</div>
+            <div style="color: rgba(255,255,255,0.8); font-size: 12px; margin-top: 4px;">{{ user.email }}</div>
+        </div>
+
+        <div style="padding: 8px 0;">
+            <a href="#" id="changeAvatarBtn" style="display: flex; align-items: center; gap: 12px; padding: 12px 20px; color: #4a5568; text-decoration: none; transition: all 0.2s;" onmouseover="this.style.background='#f8f9fa';" onmouseout="this.style.background='white';">
+                <span style="font-size: 18px;">📷</span>
+                <span>Сменить аватар</span>
+            </a>
+
+            <a href="{% url 'home' %}" style="display: flex; align-items: center; gap: 12px; padding: 12px 20px; color: #4a5568; text-decoration: none; transition: all 0.2s;" onmouseover="this.style.background='#f8f9fa';" onmouseout="this.style.background='white';">
+                <span style="font-size: 18px;">🏠</span>
+                <span>Главная</span>
+            </a>
+
+            <a href="{% url 'project_list' %}" style="display: flex; align-items: center; gap: 12px; padding: 12px 20px; color: #4a5568; text-decoration: none; transition: all 0.2s;" onmouseover="this.style.background='#f8f9fa';" onmouseout="this.style.background='white';">
+                <span style="font-size: 18px;">📁</span>
+                <span>Мои проекты</span>
+            </a>
+
+            <a href="{% url 'my_tasks' %}" style="display: flex; align-items: center; gap: 12px; padding: 12px 20px; color: #4a5568; text-decoration: none; transition: all 0.2s;" onmouseover="this.style.background='#f8f9fa';" onmouseout="this.style.background='white';">
+                <span style="font-size: 18px;">✅</span>
+                <span>Мои задачи</span>
+            </a>
+
+            <div style="height: 1px; background: #e2e8f0; margin: 8px 0;"></div>
+
+            <a href="{% url 'logout' %}" style="display: flex; align-items: center; gap: 12px; padding: 12px 20px; color: #dc3545; text-decoration: none; transition: all 0.2s;" onmouseover="this.style.background='#fff5f5';" onmouseout="this.style.background='white';">
+                <span style="font-size: 18px;">🚪</span>
+                <span>Выйти</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Модальное окно для смены аватара -->
+    <div id="avatarModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1001; align-items: center; justify-content: center;">
+        <div style="background: white; border-radius: 20px; padding: 2rem; max-width: 400px; width: 90%;">
+            <h3 style="margin-bottom: 1rem;">Сменить аватар</h3>
+            <form id="avatarForm" method="post" enctype="multipart/form-data" action="{% url 'change_avatar' %}">
+                {% csrf_token %}
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.5rem;">Выберите изображение</label>
+                    <input type="file" name="avatar" accept="image/*" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 8px;">
+                    <small style="color: #666;">Рекомендуемый размер: 200x200px. JPG, PNG, GIF</small>
+                </div>
+                <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                    <button type="button" onclick="closeAvatarModal()" style="padding: 8px 16px; background: #666; color: white; border: none; border-radius: 8px; cursor: pointer;">Отмена</button>
+                    <button type="submit" class="btn">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="container">
+        {% block content %}
+        {% endblock %}
+    </div>
+
+    <script>
+        // Функции для уведомлений (оставляем те же, что были)
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        function loadUnreadCount() {
+            fetch('/notifications/api/unread-count/')
+                .then(response => response.json())
+                .then(data => {
+                    const badge = document.getElementById('notificationBadge');
+                    if (data.count > 0) {
+                        badge.textContent = data.count > 99 ? '99+' : data.count;
+                        badge.style.display = 'inline-block';
+                    } else {
+                        badge.style.display = 'none';
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        function loadNotifications() {
+            fetch('/notifications/api/list/')
+                .then(response => response.json())
+                .then(data => {
+                    const container = document.getElementById('notificationsList');
+                    if (data.length === 0) {
+                        container.innerHTML = `
+                            <div style="padding: 40px 20px; text-align: center;">
+                                <div style="font-size: 48px; margin-bottom: 12px;">🔔</div>
+                                <div style="color: #a0aec0; font-size: 14px;">Нет уведомлений</div>
+                                <div style="color: #cbd5e0; font-size: 12px; margin-top: 6px;">Когда появятся, они будут здесь</div>
+                            </div>
+                        `;
+                        return;
+                    }
+
+                    container.innerHTML = data.map(notif => `
+                        <div class="notification-item" data-id="${notif.id}" style="padding: 16px 20px; border-bottom: 1px solid #e2e8f0; cursor: pointer; transition: all 0.2s; ${notif.is_read ? 'opacity: 0.6; background: white;' : 'background: linear-gradient(135deg, #f8f4ff, #f0ecff); border-left: 3px solid #6c63ff;'}">
+                            <div style="display: flex; align-items: start; gap: 12px;">
+                                <div style="font-size: 20px;">
+                                    ${getIconForNotification(notif.type)}
+                                </div>
+                                <div style="flex: 1;">
+                                    <div style="font-size: 13px; color: #4a5568; line-height: 1.4; margin-bottom: 6px;">${escapeHtml(notif.message)}</div>
+                                    <div style="font-size: 11px; color: #a0aec0;">🕐 ${notif.created_at}</div>
+                                </div>
+                                ${!notif.is_read ? '<div style="width: 8px; height: 8px; background: #6c63ff; border-radius: 50%;"></div>' : ''}
+                            </div>
+                        </div>
+                    `).join('');
+
+                    // Добавляем hover эффекты
+                    document.querySelectorAll('.notification-item').forEach(item => {
+                        item.addEventListener('mouseenter', function() {
+                            this.style.backgroundColor = '#f8f9fa';
+                        });
+                        item.addEventListener('mouseleave', function() {
+                            if (!this.dataset.read && this.style.background !== 'linear-gradient(135deg, #f8f4ff, #f0ecff)') {
+                                this.style.backgroundColor = '';
+                            }
+                        });
+                        item.addEventListener('click', function() {
+                            const id = this.dataset.id;
+                            markAsRead(id);
+                        });
+                    });
+                });
+        }
+
+        function getIconForNotification(type) {
+            const icons = {
+                'comment': '💬',
+                'task_assigned': '📋',
+                'task_completed': '✅',
+                'project_invite': '🎉'
+            };
+            return icons[type] || '📢';
+        }
+
+        function markAsRead(id) {
+            fetch(`/notifications/api/mark/${id}/read/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/json'
+                }
+            }).then(() => {
+                loadUnreadCount();
+                loadNotifications();
+            });
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        let dropdownVisible = false;
+        const bell = document.getElementById('notificationBell');
+        const dropdown = document.getElementById('notificationDropdown');
+
+        if (bell) {
+            bell.addEventListener('click', function(e) {
+                e.stopPropagation();
+                if (dropdownVisible) {
+                    dropdown.style.display = 'none';
+                    dropdownVisible = false;
+                } else {
+                    loadNotifications();
+                    dropdown.style.display = 'block';
+                    dropdownVisible = true;
+                }
+            });
+        }
+
+        const markAllBtn = document.getElementById('markAllReadBtn');
+        if (markAllBtn) {
+            markAllBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                fetch('/notifications/api/mark-all-read/', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken'),
+                        'Content-Type': 'application/json'
+                    }
+                }).then(() => {
+                    loadUnreadCount();
+                    loadNotifications();
+                });
+            });
+        }
+
+        document.addEventListener('click', function() {
+            if (dropdownVisible && dropdown) {
+                dropdown.style.display = 'none';
+                dropdownVisible = false;
+            }
+        });
+
+        if (dropdown) {
+            dropdown.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadUnreadCount();
+            setInterval(loadUnreadCount, 30000);
+        });
+        // Меню профиля
+        const avatarBtn = document.getElementById('avatarBtn');
+        const profileDropdown = document.getElementById('profileDropdown');
+        let profileDropdownVisible = false;
+
+        if (avatarBtn) {
+            avatarBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                // Закрываем уведомления если открыты
+                if (dropdownVisible && dropdown) {
+                    dropdown.style.display = 'none';
+                    dropdownVisible = false;
+                }
+                // Открываем/закрываем меню профиля
+                if (profileDropdownVisible) {
+                    profileDropdown.style.display = 'none';
+                    profileDropdownVisible = false;
+                } else {
+                    profileDropdown.style.display = 'block';
+                    profileDropdownVisible = true;
+                }
+            });
+        }
+
+        // Модальное окно для аватара
+        const changeAvatarBtn = document.getElementById('changeAvatarBtn');
+        const avatarModal = document.getElementById('avatarModal');
+
+        if (changeAvatarBtn) {
+            changeAvatarBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                profileDropdown.style.display = 'none';
+                profileDropdownVisible = false;
+                avatarModal.style.display = 'flex';
+            });
+        }
+
+        function closeAvatarModal() {
+            avatarModal.style.display = 'none';
+        }
+
+        // Закрытие меню профиля при клике вне
+        document.addEventListener('click', function() {
+            if (profileDropdownVisible && profileDropdown) {
+                profileDropdown.style.display = 'none';
+                profileDropdownVisible = false;
+            }
+            if (avatarModal && avatarModal.style.display === 'flex') {
+                // Не закрываем модальное окно при клике вне
+            }
+        });
+
+        if (profileDropdown) {
+            profileDropdown.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+        }
+    </script>
+</body>
+</html>

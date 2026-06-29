@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+{% if project.cover %}
+    <div style="margin-bottom: 1.5rem;">
+        <img src="{{ project.cover.url }}" alt="{{ project.title }}" style="width: 100%; height: 250px; object-fit: cover; border-radius: 16px;">
+    </div>
+{% endif %}
+
+<div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 2rem;">
+    <div>
+        <h1>{{ project.title }}</h1>
+        <p style="color: #666;">{{ project.description }}</p>
+        <p style="color: #999; font-size: 14px;">Владелец: {{ project.owner.username }} | Статус: {{ project.get_status_display }}</p>
+    </div>
+    <div style="display: flex; gap: 0.5rem;">
+        {% if project.owner == user %}
+        <a href="{% url 'project_edit' project.pk %}" class="btn">Редактировать</a>
+        {% endif %}
+        <a href="{% url 'project_members' project.pk %}" class="btn">Участники</a>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h3>🎵 Треки</h3>
+            <a href="{% url 'track_list' project.pk %}" class="btn" style="padding: 8px 16px; font-size: 14px;">Управление треками</a>
+        </div>
+
+        {% with tracks=project.tracks.all %}
+            {% if tracks %}
+                <div style="display: grid; gap: 0.75rem;">
+                    {% for track in tracks|slice:":5" %}
+                    <div class="track-item" style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; background: #f8f9fa; border-radius: 12px; transition: all 0.2s; border: 1px solid #e2e8f0;" onmouseover="this.style.transform='translateX(4px)'; this.style.borderColor='#6c63ff';" onmouseout="this.style.transform='translateX(0)'; this.style.borderColor='#e2e8f0';">
+                        <div style="flex: 1;">
+                            <a href="{% url 'track_detail' track.pk %}" style="text-decoration: none;">
+                                <strong style="color: #1a1a2e; font-size: 16px;">{{ track.title }}</strong>
+                            </a>
+                            <div style="display: flex; gap: 1rem; margin-top: 6px;">
+                                <span style="font-size: 12px; color: #718096;">
+                                    📊 Статус: {{ track.get_status_display }}
+                                </span>
+                                {% if track.bpm %}
+                                <span style="font-size: 12px; color: #718096;">
+                                    🎯 BPM: {{ track.bpm }}
+                                </span>
+                                {% endif %}
+                                {% if track.key %}
+                                <span style="font-size: 12px; color: #718096;">
+                                    🎵 Тональность: {{ track.key }}
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div>
+                            <span style="background: linear-gradient(135deg, #6c63ff, #4a42c4); color: white; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 500;">
+                                🎧 {{ track.audio_files.count }} версий
+                            </span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                {% if tracks.count > 5 %}
+                    <div style="margin-top: 1rem; text-align: center;">
+                        <a href="{% url 'track_list' project.pk %}" style="color: #6c63ff; text-decoration: none;">и еще {{ tracks.count|add:"-5" }} трек(ов)...</a>
+                    </div>
+                {% endif %}
+            {% else %}
+                <div style="text-align: center; padding: 2rem; background: #f8f9fa; border-radius: 12px;">
+                    <p style="color: #a0aec0;">Нет треков. Создайте первый трек!</p>
+                    <a href="{% url 'track_create' project.pk %}" class="btn" style="margin-top: 1rem; display: inline-block;">+ Создать трек</a>
+                </div>
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h3>✅ Задачи</h3>
+            <a href="{% url 'task_list' project.id %}" class="btn" style="padding: 8px 16px; font-size: 14px;">Все задачи</a>
+        </div>
+
+        {% with tasks=project.tasks.all|slice:":5" %}
+            {% if tasks %}
+                <div style="display: grid; gap: 0.75rem;">
+                    {% for task in tasks %}
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; background: #f8f9fa; border-radius: 12px; border-left: 4px solid
+                        {% if task.status == 'todo' %}#ffc107
+                        {% elif task.status == 'in_progress' %}#17a2b8
+                        {% else %}#28a745{% endif %};">
+                        <div>
+                            <strong>{{ task.title }}</strong>
+                            <div style="display: flex; gap: 1rem; margin-top: 6px;">
+                                <span style="font-size: 11px; color: #718096;">
+                                    🎯 {{ task.get_priority_display }}
+                                </span>
+                                {% if task.due_date %}
+                                <span style="font-size: 11px; color: #718096;">
+                                    📅 {{ task.due_date }}
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div>
+                            <span style="font-size: 12px; padding: 4px 10px; border-radius: 20px; background:
+                                {% if task.status == 'todo' %}#fff3cd
+                                {% elif task.status == 'in_progress' %}#d1ecf1
+                                {% else %}#d4edda{% endif %};">
+                                {{ task.get_status_display }}
+                            </span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div style="text-align: center; padding: 2rem; background: #f8f9fa; border-radius: 12px;">
+                    <p style="color: #a0aec0;">Нет задач. Создайте первую задачу!</p>
+                    <a href="{% url 'task_list' project.id %}" class="btn" style="margin-top: 1rem; display: inline-block;">+ Создать задачу</a>
+                </div>
+            {% endif %}
+        {% endwith %}
+    </div>
+</div>
+
+<div class="card" style="margin-top: 1.5rem;">
+    <h3>Последние комментарии</h3>
+    <p>Здесь будут последние комментарии по проекту</p>
+</div>
+{% endblock %}

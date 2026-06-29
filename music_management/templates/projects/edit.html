@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="card" style="max-width: 600px; margin: 0 auto;">
+    <h2>Редактировать проект</h2>
+    <form method="post" enctype="multipart/form-data">  <!-- Добавь enctype -->
+        {% csrf_token %}
+        <div style="margin-bottom: 1rem;">
+            <label style="display: block; margin-bottom: 0.5rem;">Название проекта</label>
+            <input type="text" name="title" value="{{ project.title }}" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+        </div>
+        <div style="margin-bottom: 1rem;">
+            <label style="display: block; margin-bottom: 0.5rem;">Описание</label>
+            <textarea name="description" rows="5" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">{{ project.description }}</textarea>
+        </div>
+
+        {% if project.cover %}
+        <div style="margin-bottom: 1rem;">
+            <label>Текущая обложка</label>
+            <div style="margin-top: 5px;">
+                <img src="{{ project.cover.url }}" alt="Обложка" style="max-width: 200px; border-radius: 8px;">
+                <br><small style="color: #666;">Загрузите новый файл, чтобы заменить</small>
+            </div>
+        </div>
+        {% endif %}
+
+        <div style="margin-bottom: 1rem;">
+            <label style="display: block; margin-bottom: 0.5rem;">Новая обложка</label>
+            <input type="file" name="cover" accept="image/*" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+            <small style="color: #666;">Рекомендуемый размер: 400x300px</small>
+        </div>
+
+        <div style="display: flex; gap: 1rem;">
+            <button type="submit" class="btn">Сохранить</button>
+            <a href="{% url 'project_detail' project.pk %}" style="padding: 10px 20px; background: #666; color: white; text-decoration: none; border-radius: 5px;">Отмена</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

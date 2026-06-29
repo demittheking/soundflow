@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <div>
+        <a href="{% url 'project_detail' project.pk %}" style="color: #6c63ff; text-decoration: none;">← Назад к проекту</a>
+        <h1>Треки проекта: {{ project.title }}</h1>
+    </div>
+    <a href="{% url 'track_create' project.pk %}" class="btn">+ Новый трек</a>
+</div>
+
+{% if tracks %}
+    <div style="display: grid; gap: 1rem;">
+        {% for track in tracks %}
+        <div class="card" style="cursor: pointer;" onclick="window.location.href='{% url 'track_detail' track.pk %}'">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h3>{{ track.title }}</h3>
+                    <div style="display: flex; gap: 1rem; margin-top: 0.5rem;">
+                        <span style="font-size: 14px; color: #666;">Статус: {{ track.get_status_display }}</span>
+                        {% if track.bpm %}
+                        <span style="font-size: 14px; color: #666;">BPM: {{ track.bpm }}</span>
+                        {% endif %}
+                        {% if track.key %}
+                        <span style="font-size: 14px; color: #666;">Тональность: {{ track.key }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div>
+                    <span style="background: #6c63ff; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">
+                        Версий: {{ track.audio_files.count }}
+                    </span>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="card" style="text-align: center;">
+        <p>В этом проекте пока нет треков.</p>
+        <a href="{% url 'track_create' project.pk %}" class="btn">Создать первый трек</a>
+    </div>
+{% endif %}
+{% endblock %}
