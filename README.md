@@ -26,7 +26,7 @@ Email: dkarasev42@gmail.com
 
 ---
 
-## 📸 Скриншоты
+## Скриншоты
 
 ### Главная страница
 ![Главная страница](music_management/screenshots/home.png)
